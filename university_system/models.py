@@ -237,9 +237,9 @@ class University:
 def create_default_university() -> University:
     uni = University("КГТУ им. И. Раззакова")
 
-    t1 = Teacher("Айбек Марипов",   45, "maripov@kgtu.kg",  "T01", "Программирование", 55000)
-    t2 = Teacher("Гүлнара Асанова", 38, "asanova@kgtu.kg",  "T02", "Математика",       48000)
-    t3 = Teacher("Нурлан Токтосун", 52, "toktosun@kgtu.kg", "T03", "Экономика",        50000)
+    t1 = Teacher("Айбек Марипов",   45, "maripov@alatoo.edu.kg",  "T01", "Программирование", 55000)
+    t2 = Teacher("Гүлнара Асанова", 38, "asanova@alatoo.edu.kg",  "T02", "Математика",       48000)
+    t3 = Teacher("Нурлан Токтосун", 52, "toktosun@alatoo.edu.kg", "T03", "Экономика",        50000)
 
     c1 = Course("C01", "Python ООП",             4, t1)
     c2 = Course("C02", "Алгоритмы и структуры", 5, t2)
