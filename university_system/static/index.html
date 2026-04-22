@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>UniSystem</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0f1117;--surface:#1a1d27;--card:#21253a;--border:#2e3350;
+    --accent:#6c63ff;--accent2:#00c2cb;--green:#22c55e;--red:#ef4444;
+    --yellow:#f59e0b;--text:#e8eaf6;--muted:#8b90b8;--radius:14px;
+  }
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+  .sidebar{width:240px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;position:fixed;top:0;left:0;bottom:0}
+  .sidebar-logo{padding:0 24px 28px;border-bottom:1px solid var(--border)}
+  .sidebar-logo h1{font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .sidebar-logo p{font-size:.75rem;color:var(--muted);margin-top:4px}
+  .nav{margin-top:20px;flex:1}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:12px 24px;cursor:pointer;border-left:3px solid transparent;color:var(--muted);font-size:.92rem;transition:all .2s}
+  .nav-item:hover{background:rgba(108,99,255,.08);color:var(--text)}
+  .nav-item.active{background:rgba(108,99,255,.15);border-left-color:var(--accent);color:var(--text);font-weight:600}
+  .nav-icon{font-size:1.1rem;width:22px;text-align:center}
+  .sidebar-stats{padding:20px 24px;border-top:1px solid var(--border);font-size:.78rem;color:var(--muted)}
+  .main{margin-left:240px;flex:1;padding:32px;min-height:100vh}
+  .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+  .page-header h2{font-size:1.6rem;font-weight:700}
+  .page-header p{color:var(--muted);font-size:.88rem;margin-top:3px}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px;margin-bottom:28px}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;position:relative;overflow:hidden}
+  .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+  .stat-card.purple::before{background:var(--accent)}
+  .stat-card.teal::before{background:var(--accent2)}
+  .stat-card.green::before{background:var(--green)}
+  .stat-card.yellow::before{background:var(--yellow)}
+  .stat-card .icon{font-size:1.8rem;margin-bottom:10px}
+  .stat-card .value{font-size:2rem;font-weight:800}
+  .stat-card .label{color:var(--muted);font-size:.82rem;margin-top:4px}
+  .section-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:24px}
+  .section-card h3{font-size:1rem;font-weight:700;margin-bottom:18px;color:var(--text);display:flex;align-items:center;gap:8px}
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:.88rem}
+  thead th{text-align:left;padding:10px 14px;color:var(--muted);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
+  tbody tr{transition:background .15s}
+  tbody tr:hover{background:rgba(108,99,255,.06)}
+  tbody td{padding:13px 14px;border-bottom:1px solid rgba(46,51,80,.5);vertical-align:middle}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+  .badge-purple{background:rgba(108,99,255,.2);color:#a59dff}
+  .badge-teal{background:rgba(0,194,203,.15);color:#4ee0e8}
+  .badge-green{background:rgba(34,197,94,.15);color:#4ade80}
+  .badge-yellow{background:rgba(245,158,11,.15);color:#fbbf24}
+  .badge-red{background:rgba(239,68,68,.15);color:#f87171}
+  .avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0}
+  .av-purple{background:rgba(108,99,255,.25);color:var(--accent)}
+  .av-teal{background:rgba(0,194,203,.2);color:var(--accent2)}
+  .av-green{background:rgba(34,197,94,.2);color:var(--green)}
+  .av-yellow{background:rgba(245,158,11,.2);color:var(--yellow)}
+  .name-cell{display:flex;align-items:center;gap:10px}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:9px;border:none;cursor:pointer;font-size:.88rem;font-weight:600;transition:all .2s}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:#7c74ff;transform:translateY(-1px)}
+  .btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted)}
+  .btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-danger{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+  .btn-danger:hover{background:rgba(239,68,68,.2)}
+  .btn-sm{padding:5px 12px;font-size:.8rem}
+  .search-row{display:flex;gap:12px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+  .search-input{flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 14px;color:var(--text);font-size:.9rem;outline:none;transition:border .2s}
+  .search-input:focus{border-color:var(--accent)}
+  .search-input::placeholder{color:var(--muted)}
+  select.search-input{cursor:pointer}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;align-items:center;justify-content:center}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:32px;width:100%;max-width:480px;position:relative;animation:fadeUp .25s ease}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .modal h3{font-size:1.15rem;font-weight:700;margin-bottom:22px}
+  .modal-close{position:absolute;top:18px;right:18px;background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;line-height:1}
+  .form-group{margin-bottom:16px}
+  .form-group label{display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.04em}
+  .form-group input,.form-group select{width:100%;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:10px 14px;color:var(--text);font-size:.9rem;outline:none;transition:border .2s}
+  .form-group input:focus,.form-group select:focus{border-color:var(--accent)}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px}
+  .err{color:var(--red);font-size:.8rem;margin-top:6px}
+  .toast-container{position:fixed;bottom:28px;right:28px;z-index:2000;display:flex;flex-direction:column;gap:10px}
+  .toast{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px 20px;font-size:.88rem;display:flex;align-items:center;gap:10px;animation:slideIn .3s ease;min-width:260px}
+  @keyframes slideIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+  .toast.success{border-left:3px solid var(--green)}
+  .toast.error{border-left:3px solid var(--red)}
+  .toast.info{border-left:3px solid var(--accent)}
+  .page{display:none}
+  .page.active{display:block}
+  .progress{background:var(--surface);border-radius:4px;height:6px;overflow:hidden}
+  .progress-fill{height:100%;border-radius:4px;background:var(--accent)}
+  .empty{text-align:center;padding:48px 20px;color:var(--muted)}
+  .empty-icon{font-size:3rem;margin-bottom:12px}
+  .tags{display:flex;flex-wrap:wrap;gap:5px}
+  .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media(max-width:768px){.sidebar{width:60px}.sidebar-logo,.nav-item span,.sidebar-stats{display:none}.nav-item{padding:14px;justify-content:center}.main{margin-left:60px;padding:20px 16px}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>UniSystem</h1>
+    <p>Управление университетом</p>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="navigate('dashboard')"><span class="nav-icon">🏠</span><span>Дашборд</span></div>
+    <div class="nav-item" onclick="navigate('students')"><span class="nav-icon">🎓</span><span>Студенты</span></div>
+    <div class="nav-item" onclick="navigate('teachers')"><span class="nav-icon">👨‍🏫</span><span>Преподаватели</span></div>
+    <div class="nav-item" onclick="navigate('courses')"><span class="nav-icon">📖</span><span>Курсы</span></div>
+    <div class="nav-item" onclick="navigate('departments')"><span class="nav-icon">🏛</span><span>Факультеты</span></div>
+    <div class="nav-item" onclick="navigate('enroll')"><span class="nav-icon">📋</span><span>Запись</span></div>
+  </nav>
+  <div class="sidebar-stats" id="sidebarStats">Загрузка...</div>
+</aside>
+
+<main class="main">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header"><div><h2>Дашборд</h2><p>Обзор системы</p></div></div>
+    <div class="stats-grid" id="statsGrid"><div class="spinner"></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="section-card"><h3>📚 Последние студенты</h3><div id="recentStudents"></div></div>
+      <div class="section-card"><h3>📖 Популярные курсы</h3><div id="popularCourses"></div></div>
+    </div>
+  </div>
+
+  <!-- STUDENTS -->
+  <div class="page" id="page-students">
+    <div class="page-header">
+      <div><h2>Студенты</h2><p>Управление студентами</p></div>
+      <button class="btn btn-primary" onclick="openModal('addStudent')">+ Добавить студента</button>
+    </div>
+    <div class="section-card">
+      <div class="search-row">
+        <input class="search-input" id="studentSearch" placeholder="🔍 Поиск по имени или ID..." oninput="filterStudents()">
+        <select class="search-input" style="max-width:160px" id="yearFilter" onchange="filterStudents()">
+          <option value="">Все курсы</option>
+          <option>1</option><option>2</option><option>3</option>
+          <option>4</option><option>5</option><option>6</option>
+        </select>
+        <select class="search-input" style="max-width:180px" id="studentSortBy" onchange="filterStudents()">
+          <option value="name">По имени</option>
+          <option value="year">По курсу</option>
+          <option value="courses">По кол-ву курсов</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Студент</th><th>ID</th><th>Курс</th><th>Email</th><th>Дисциплины</th><th>Действия</th></tr></thead>
+          <tbody id="studentsTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEACHERS -->
+  <div class="page" id="page-teachers">
+    <div class="page-header">
+      <div><h2>Преподаватели</h2><p>Преподавательский состав</p></div>
+      <button class="btn btn-primary" onclick="openModal('addTeacher')">+ Добавить преподавателя</button>
+    </div>
+    <div class="section-card">
+      <div class="search-row">
+        <input class="search-input" id="teacherSearch" placeholder="🔍 Поиск..." oninput="filterTeachers()">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Преподаватель</th><th>ID</th><th>Кафедра</th><th>Зарплата</th><th>Курсы</th></tr></thead>
+          <tbody id="teachersTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- COURSES -->
+  <div class="page" id="page-courses">
+    <div class="page-header">
+      <div><h2>Курсы</h2><p>Учебные дисциплины</p></div>
+      <button class="btn btn-primary" onclick="openModal('addCourse')">+ Добавить курс</button>
+    </div>
+    <div class="section-card">
+      <div class="search-row">
+        <input class="search-input" id="courseSearch" placeholder="🔍 Поиск курса..." oninput="filterCourses()">
+        <select class="search-input" style="max-width:180px" id="courseSortBy" onchange="filterCourses()">
+          <option value="credits">По кредитам</option>
+          <option value="students">По студентам</option>
+          <option value="title">По названию</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Курс</th><th>ID</th><th>Преподаватель</th><th>Кредиты</th><th>Студентов</th><th>Заполненность</th></tr></thead>
+          <tbody id="coursesTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEPARTMENTS -->
+  <div class="page" id="page-departments">
+    <div class="page-header">
+      <div><h2>Факультеты</h2><p>Структура университета</p></div>
+      <button class="btn btn-primary" onclick="openModal('addDept')">+ Добавить факультет</button>
+    </div>
+    <div id="deptsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px"></div>
+  </div>
+
+  <!-- ENROLL -->
+  <div class="page" id="page-enroll">
+    <div class="page-header"><div><h2>Запись на курс</h2><p>Управление записями</p></div></div>
+    <div class="section-card">
+      <h3>📋 Новая запись</h3>
+      <div class="form-row" style="max-width:520px;margin-bottom:16px">
+        <div class="form-group"><label>Студент</label><select class="search-input" id="enrollStudent"></select></div>
+        <div class="form-group"><label>Курс</label><select class="search-input" id="enrollCourse"></select></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" onclick="doEnroll()">✓ Записать</button>
+        <button class="btn btn-danger" onclick="doDrop()">✗ Отчислить</button>
+      </div>
+    </div>
+    <div class="section-card">
+      <h3>📊 Текущие записи</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Студент</th><th>Курс</th><th>Преподаватель</th><th>Кредиты</th><th></th></tr></thead>
+          <tbody id="enrollTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-addStudent">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('addStudent')">✕</button>
+    <h3>➕ Новый студент</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Полное имя</label><input id="sName" placeholder="Азамат Бектенов"></div>
+      <div class="form-group"><label>ID студента</label><input id="sId" placeholder="S006"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Возраст</label><input id="sAge" type="number" placeholder="20" min="16" max="60"></div>
+      <div class="form-group"><label>Курс (1–6)</label><select id="sYear"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
+    </div>
+    <div class="form-group"><label>Email</label><input id="sEmail" type="email" placeholder="student@uni.kg"></div>
+    <p class="err" id="sErr"></p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('addStudent')">Отмена</button>
+      <button class="btn btn-primary" onclick="addStudent()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-addTeacher">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('addTeacher')">✕</button>
+    <h3>➕ Новый преподаватель</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Полное имя</label><input id="tName" placeholder="Айбек Марипов"></div>
+      <div class="form-group"><label>ID преподавателя</label><input id="tId" placeholder="T04"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Возраст</label><input id="tAge" type="number" placeholder="35"></div>
+      <div class="form-group"><label>Зарплата (сом)</label><input id="tSalary" type="number" placeholder="50000"></div>
+    </div>
+    <div class="form-group"><label>Email</label><input id="tEmail" type="email" placeholder="teacher@uni.kg"></div>
+    <div class="form-group"><label>Кафедра</label><input id="tDept" placeholder="Информатика"></div>
+    <p class="err" id="tErr"></p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('addTeacher')">Отмена</button>
+      <button class="btn btn-primary" onclick="addTeacher()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-addCourse">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('addCourse')">✕</button>
+    <h3>➕ Новый курс</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Название курса</label><input id="cTitle" placeholder="Python ООП"></div>
+      <div class="form-group"><label>ID курса</label><input id="cId" placeholder="C05"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Кредиты</label><input id="cCredits" type="number" placeholder="3" min="1" max="10"></div>
+      <div class="form-group"><label>Преподаватель</label><select id="cTeacher" class="search-input"></select></div>
+    </div>
+    <p class="err" id="cErr"></p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('addCourse')">Отмена</button>
+      <button class="btn btn-primary" onclick="addCourse()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-addDept">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('addDept')">✕</button>
+    <h3>➕ Новый факультет</h3>
+    <div class="form-group"><label>Название факультета</label><input id="dName" placeholder="Инженерный факультет"></div>
+    <div class="form-group"><label>ID факультета</label><input id="dId" placeholder="D03"></div>
+    <p class="err" id="dErr"></p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('addDept')">Отмена</button>
+      <button class="btn btn-primary" onclick="addDept()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ═══════════════════════════════════
+//  СОСТОЯНИЕ
+// ═══════════════════════════════════
+let state = { students: [], teachers: [], courses: [], departments: [] };
+
+// ═══════════════════════════════════
+//  API
+// ═══════════════════════════════════
+const API = '';   // пусто = тот же origin (работает и локально и на сервере)
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(API + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || 'Ошибка сервера');
+  return data;
+}
+
+async function loadData() {
+  const data = await apiFetch('/api/data');
+  state.students    = data.students    || [];
+  state.teachers    = data.teachers    || [];
+  state.courses     = data.courses     || [];
+  state.departments = data.departments || [];
+  document.getElementById('sidebarStats').textContent =
+    `${state.students.length} студ. · ${state.courses.length} курс.`;
+}
+
+// ═══════════════════════════════════
+//  НАВИГАЦИЯ
+// ═══════════════════════════════════
+const pages = ['dashboard','students','teachers','courses','departments','enroll'];
+
+async function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item')[pages.indexOf(page)].classList.add('active');
+  await loadData();
+  if (page === 'dashboard')   renderDashboard();
+  if (page === 'students')    renderStudents(state.students);
+  if (page === 'teachers')    renderTeachers(state.teachers);
+  if (page === 'courses')     renderCourses(state.courses);
+  if (page === 'departments') renderDepts();
+  if (page === 'enroll')      renderEnroll();
+}
+
+// ═══════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════
+function renderDashboard() {
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card purple"><div class="icon">🎓</div><div class="value">${state.students.length}</div><div class="label">Студентов</div></div>
+    <div class="stat-card teal"><div class="icon">👨‍🏫</div><div class="value">${state.teachers.length}</div><div class="label">Преподавателей</div></div>
+    <div class="stat-card green"><div class="icon">📖</div><div class="value">${state.courses.length}</div><div class="label">Курсов</div></div>
+    <div class="stat-card yellow"><div class="icon">🏛</div><div class="value">${state.departments.length}</div><div class="label">Факультетов</div></div>`;
+
+  const colors = ['av-purple','av-teal','av-green','av-yellow'];
+  const recent = [...state.students].slice(-4).reverse();
+  document.getElementById('recentStudents').innerHTML = recent.length
+    ? recent.map((s,i) => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div class="avatar ${colors[i%4]}">${s.name[0]}</div>
+        <div><div style="font-size:.9rem;font-weight:600">${s.name}</div>
+        <div style="font-size:.78rem;color:var(--muted)">${s.student_id} · ${s.year} курс</div></div>
+        <span class="badge badge-purple" style="margin-left:auto">${s.courses.length} курс.</span>
+      </div>`).join('')
+    : '<div class="empty"><div class="empty-icon">👤</div>Нет студентов</div>';
+
+  const sorted = [...state.courses].sort((a,b) => b.students.length - a.students.length);
+  const maxSt  = sorted[0]?.students.length || 1;
+  document.getElementById('popularCourses').innerHTML = sorted.map(c => `
+    <div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:.88rem">
+        <span>${c.title}</span><span style="color:var(--muted)">${c.students.length} ст.</span>
+      </div>
+      <div class="progress"><div class="progress-fill" style="width:${(c.students.length/maxSt)*100}%"></div></div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════
+//  STUDENTS
+// ═══════════════════════════════════
+const avColors = ['av-purple','av-teal','av-green','av-yellow'];
+const yearColors = ['','badge-purple','badge-teal','badge-green','badge-yellow','badge-red','badge-red'];
+
+function filterStudents() {
+  const q    = document.getElementById('studentSearch').value.toLowerCase();
+  const yr   = document.getElementById('yearFilter').value;
+  const sort = document.getElementById('studentSortBy').value;
+  let list   = [...state.students];
+  if (q)  list = list.filter(s => s.name.toLowerCase().includes(q) || s.student_id.toLowerCase().includes(q));
+  if (yr) list = list.filter(s => s.year === +yr);
+  if (sort === 'year')    list.sort((a,b) => a.year - b.year);
+  else if (sort === 'courses') list.sort((a,b) => b.courses.length - a.courses.length);
+  else list.sort((a,b) => a.name.localeCompare(b.name));
+  renderStudents(list);
+}
+
+function renderStudents(list) {
+  const tb = document.getElementById('studentsTable');
+  if (!list.length) { tb.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">🔍</div>Ничего не найдено</div></td></tr>`; return; }
+  tb.innerHTML = list.map((s,i) => `
+    <tr>
+      <td><div class="name-cell">
+        <div class="avatar ${avColors[i%4]}">${s.name[0]}</div>
+        <div><div style="font-weight:600">${s.name}</div><div style="font-size:.76rem;color:var(--muted)">${s.email}</div></div>
+      </div></td>
+      <td><span class="badge badge-purple">${s.student_id}</span></td>
+      <td><span class="badge ${yearColors[s.year]}">${s.year} курс</span></td>
+      <td style="color:var(--muted);font-size:.85rem">${s.email}</td>
+      <td><div class="tags">${s.courses.map(c=>`<span class="badge badge-teal">${c.title}</span>`).join('')||'—'}</div></td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeStudent('${s.student_id}')">Удалить</button></td>
+    </tr>`).join('');
+}
+
+async function removeStudent(id) {
+  try {
+    await apiFetch(`/api/students/${id}`, { method: 'DELETE' });
+    await loadData();
+    renderStudents(state.students);
+    toast('Студент удалён', 'info');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════
+//  TEACHERS
+// ═══════════════════════════════════
+function filterTeachers() {
+  const q = document.getElementById('teacherSearch').value.toLowerCase();
+  renderTeachers(state.teachers.filter(t => t.name.toLowerCase().includes(q) || t.department.toLowerCase().includes(q)));
+}
+
+function renderTeachers(list) {
+  const tb = document.getElementById('teachersTable');
+  if (!list.length) { tb.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="empty-icon">👨‍🏫</div>Нет преподавателей</div></td></tr>`; return; }
+  tb.innerHTML = list.map((t,i) => `
+    <tr>
+      <td><div class="name-cell">
+        <div class="avatar ${avColors[i%4]}">${t.name[0]}</div>
+        <div><div style="font-weight:600">${t.name}</div><div style="font-size:.76rem;color:var(--muted)">${t.email}</div></div>
+      </div></td>
+      <td><span class="badge badge-teal">${t.teacher_id}</span></td>
+      <td>${t.department}</td>
+      <td><span style="color:var(--green);font-weight:600">${t.salary.toLocaleString()} сом</span></td>
+      <td><div class="tags">${t.courses.map(c=>`<span class="badge badge-purple">${c.title}</span>`).join('')||'—'}</div></td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════
+//  COURSES
+// ═══════════════════════════════════
+function filterCourses() {
+  const q    = document.getElementById('courseSearch').value.toLowerCase();
+  const sort = document.getElementById('courseSortBy').value;
+  let list   = [...state.courses];
+  if (q) list = list.filter(c => c.title.toLowerCase().includes(q));
+  if (sort === 'students') list.sort((a,b) => b.students.length - a.students.length);
+  else if (sort === 'title') list.sort((a,b) => a.title.localeCompare(b.title));
+  else list.sort((a,b) => b.credits - a.credits);
+  renderCourses(list);
+}
+
+function renderCourses(list) {
+  const maxSt = Math.max(...list.map(c => c.students.length), 1);
+  const tb = document.getElementById('coursesTable');
+  if (!list.length) { tb.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">📖</div>Нет курсов</div></td></tr>`; return; }
+  tb.innerHTML = list.map(c => {
+    const pct = Math.round((c.students.length / maxSt) * 100);
+    return `<tr>
+      <td style="font-weight:600">${c.title}</td>
+      <td><span class="badge badge-green">${c.course_id}</span></td>
+      <td>${c.teacher.name}</td>
+      <td><span class="badge badge-yellow">${c.credits} кр.</span></td>
+      <td>${c.students.length}</td>
+      <td style="min-width:120px"><div style="display:flex;align-items:center;gap:8px">
+        <div class="progress" style="flex:1"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <span style="font-size:.75rem;color:var(--muted)">${pct}%</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════
+//  DEPARTMENTS
+// ═══════════════════════════════════
+function renderDepts() {
+  const dg = document.getElementById('deptsGrid');
+  if (!state.departments.length) { dg.innerHTML = `<div class="empty"><div class="empty-icon">🏛</div>Нет факультетов</div>`; return; }
+  dg.innerHTML = state.departments.map((d,i) => `
+    <div class="section-card" style="margin:0">
+      <h3>${['🖥','📊','🔬','⚙️'][i%4]} ${d.name}</h3>
+      <div style="color:var(--muted);font-size:.8rem;margin-bottom:16px">ID: ${d.dept_id}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div style="background:var(--surface);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:800;color:var(--accent)">${d.teachers.length}</div>
+          <div style="font-size:.75rem;color:var(--muted)">Преподавателей</div>
+        </div>
+        <div style="background:var(--surface);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:800;color:var(--accent2)">${d.courses.length}</div>
+          <div style="font-size:.75rem;color:var(--muted)">Курсов</div>
+        </div>
+      </div>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px">Преподаватели:</div>
+      <div class="tags">${d.teachers.map(t=>`<span class="badge badge-purple">${t.name}</span>`).join('')||'—'}</div>
+      <div style="font-size:.8rem;color:var(--muted);margin:10px 0 6px">Курсы:</div>
+      <div class="tags">${d.courses.map(c=>`<span class="badge badge-teal">${c.title}</span>`).join('')||'—'}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════
+//  ENROLL
+// ═══════════════════════════════════
+function renderEnroll() {
+  document.getElementById('enrollStudent').innerHTML = state.students.map(s => `<option value="${s.student_id}">${s.name}</option>`).join('');
+  document.getElementById('enrollCourse').innerHTML  = state.courses.map(c  => `<option value="${c.course_id}">${c.title}</option>`).join('');
+  const rows = [];
+  state.students.forEach(s => s.courses.forEach(c => {
+    const full = state.courses.find(fc => fc.course_id === c.course_id);
+    rows.push({ student: s, course: c, teacher: full?.teacher?.name || '—', credits: full?.credits || '—' });
+  }));
+  const tb = document.getElementById('enrollTable');
+  if (!rows.length) { tb.innerHTML = `<tr><td colspan="5"><div class="empty"><div class="empty-icon">📋</div>Нет записей</div></td></tr>`; return; }
+  tb.innerHTML = rows.map(r => `
+    <tr>
+      <td style="font-weight:600">${r.student.name}</td>
+      <td>${r.course.title}</td>
+      <td>${r.teacher}</td>
+      <td><span class="badge badge-yellow">${r.credits} кр.</span></td>
+      <td><button class="btn btn-danger btn-sm" onclick="quickDrop('${r.student.student_id}','${r.course.course_id}')">Отчислить</button></td>
+    </tr>`).join('');
+}
+
+async function doEnroll() {
+  const student_id = document.getElementById('enrollStudent').value;
+  const course_id  = document.getElementById('enrollCourse').value;
+  try {
+    await apiFetch('/api/enroll', { method: 'POST', body: JSON.stringify({ student_id, course_id }) });
+    await loadData(); renderEnroll();
+    toast('Студент записан на курс', 'success');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function doDrop() {
+  const student_id = document.getElementById('enrollStudent').value;
+  const course_id  = document.getElementById('enrollCourse').value;
+  try {
+    await apiFetch(`/api/enroll/${student_id}/${course_id}`, { method: 'DELETE' });
+    await loadData(); renderEnroll();
+    toast('Запись удалена', 'info');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function quickDrop(student_id, course_id) {
+  try {
+    await apiFetch(`/api/enroll/${student_id}/${course_id}`, { method: 'DELETE' });
+    await loadData(); renderEnroll();
+    toast('Запись удалена', 'info');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════
+function openModal(name) {
+  document.getElementById('modal-' + name).classList.add('open');
+  ['sErr','tErr','cErr','dErr'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent=''; });
+  if (name === 'addCourse') {
+    document.getElementById('cTeacher').innerHTML = state.teachers.map(t => `<option value="${t.teacher_id}">${t.name}</option>`).join('');
+  }
+}
+function closeModal(name) { document.getElementById('modal-' + name).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
+
+async function addStudent() {
+  const name = document.getElementById('sName').value.trim();
+  const student_id = document.getElementById('sId').value.trim();
+  const age  = +document.getElementById('sAge').value;
+  const year = +document.getElementById('sYear').value;
+  const email= document.getElementById('sEmail').value.trim();
+  if (!name||!student_id||!age||!email) { document.getElementById('sErr').textContent='Заполните все поля.'; return; }
+  try {
+    await apiFetch('/api/students', { method:'POST', body: JSON.stringify({name,age,email,student_id,year}) });
+    closeModal('addStudent');
+    await loadData(); renderStudents(state.students); renderDashboard();
+    toast(`Студент «${name}» добавлен`, 'success');
+    ['sName','sId','sAge','sEmail'].forEach(id => document.getElementById(id).value='');
+  } catch(e) { document.getElementById('sErr').textContent = e.message; }
+}
+
+async function addTeacher() {
+  const name=document.getElementById('tName').value.trim();
+  const teacher_id=document.getElementById('tId').value.trim();
+  const age=+document.getElementById('tAge').value;
+  const salary=+document.getElementById('tSalary').value;
+  const email=document.getElementById('tEmail').value.trim();
+  const department=document.getElementById('tDept').value.trim();
+  if (!name||!teacher_id||!age||!salary||!email||!department) { document.getElementById('tErr').textContent='Заполните все поля.'; return; }
+  try {
+    await apiFetch('/api/teachers', { method:'POST', body: JSON.stringify({name,age,email,teacher_id,department,salary}) });
+    closeModal('addTeacher');
+    await loadData(); renderTeachers(state.teachers); renderDashboard();
+    toast(`Преподаватель «${name}» добавлен`, 'success');
+  } catch(e) { document.getElementById('tErr').textContent = e.message; }
+}
+
+async function addCourse() {
+  const title=document.getElementById('cTitle').value.trim();
+  const course_id=document.getElementById('cId').value.trim();
+  const credits=+document.getElementById('cCredits').value;
+  const teacher_id=document.getElementById('cTeacher').value;
+  if (!title||!course_id||!credits) { document.getElementById('cErr').textContent='Заполните все поля.'; return; }
+  try {
+    await apiFetch('/api/courses', { method:'POST', body: JSON.stringify({course_id,title,credits,teacher_id}) });
+    closeModal('addCourse');
+    await loadData(); renderCourses(state.courses); renderDashboard();
+    toast(`Курс «${title}» добавлен`, 'success');
+    ['cTitle','cId','cCredits'].forEach(id => document.getElementById(id).value='');
+  } catch(e) { document.getElementById('cErr').textContent = e.message; }
+}
+
+async function addDept() {
+  const name=document.getElementById('dName').value.trim();
+  const dept_id=document.getElementById('dId').value.trim();
+  if (!name||!dept_id) { document.getElementById('dErr').textContent='Заполните все поля.'; return; }
+  try {
+    await apiFetch('/api/departments', { method:'POST', body: JSON.stringify({dept_id,name}) });
+    closeModal('addDept');
+    await loadData(); renderDepts(); renderDashboard();
+    toast(`Факультет «${name}» создан`, 'success');
+  } catch(e) { document.getElementById('dErr').textContent = e.message; }
+}
+
+// ═══════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════
+function toast(msg, type='info') {
+  const icons = {success:'✅',error:'❌',info:'ℹ️'};
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+// ═══════════════════════════════════
+//  INIT
+// ═══════════════════════════════════
+loadData().then(() => renderDashboard());
+</script>
+</body>
+</html>
